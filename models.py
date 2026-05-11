@@ -12,7 +12,7 @@ REQUIRED_HEADERS = [
     "Buff",
     "Debuff",
     "Updated On",
-    "Notes",
+    "Note",
 ]
 
 
@@ -27,14 +27,14 @@ class AbilityRow:
     buff: int
     debuff: int
     updated_on: str
-    notes: str = ""
+    note: str = ""
 
     @property
     def key(self) -> tuple[str, str, str, str]:
         return make_key(self.ability, self.champion, self.buff, self.debuff)
 
-    def to_sheet_values(self, row_id: str = "", notes: str | None = None) -> list[str]:
-        row_notes = self.notes if notes is None else notes
+    def to_sheet_values(self, row_id: str = "", note: str | None = None) -> list[str]:
+        row_note = self.note if note is None else note
         return [
             row_id,
             self.ability,
@@ -46,7 +46,7 @@ class AbilityRow:
             str(self.buff),
             str(self.debuff),
             self.updated_on,
-            row_notes,
+            row_note,
         ]
 
 

@@ -51,8 +51,8 @@ def upsert_ability_rows(
             existing[7] = str(scraped.buff)
             existing[8] = str(scraped.debuff)
             existing[9] = scraped.updated_on
-            if not existing[10].strip() and scraped.notes:
-                existing[10] = scraped.notes
+            if not existing[10].strip() and scraped.note:
+                existing[10] = scraped.note
             if existing == original:
                 unchanged += 1
             else:

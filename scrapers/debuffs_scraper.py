@@ -45,7 +45,7 @@ def _parse_debuff_rows(
                 buff=0,
                 debuff=1,
                 updated_on=updated_on,
-                notes=category,
+                note=category,
             )
         )
     return parsed

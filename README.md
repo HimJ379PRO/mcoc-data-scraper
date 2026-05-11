@@ -7,7 +7,7 @@ Scrapes Marvel Contest of Champions Wiki ability pages with Playwright and upser
 The `Abilities` worksheet must contain these headers in columns `A:K`:
 
 ```text
-ID | Ability | Description | Champion | Similar To | Offensive | Defensive | Buff | Debuff | Updated On | Notes
+ID | Ability | Description | Champion | Similar To | Offensive | Defensive | Buff | Debuff | Updated On | Note
 ```
 
 ## Setup
@@ -68,9 +68,9 @@ python3 main.py --type debuffs --write-sheet
 - Debuffs rows use `Champion = Generic`.
 - Buffs rows use `Buff = 1` and `Debuff = 0`.
 - Debuffs rows use `Buff = 0` and `Debuff = 1`.
-- New Debuffs rows use `Notes = Damaging` or `Notes = Non-Damaging`.
-- Blank existing Debuffs notes are backfilled from the scraper category.
-- `Similar To`, `Offensive`, `Defensive`, and non-blank `Notes` are preserved for existing rows.
+- New Debuffs rows use `Note = Damaging` or `Note = Non-Damaging`.
+- Blank existing Debuffs `Note` values are backfilled from the scraper category.
+- `Similar To`, `Offensive`, `Defensive`, and non-blank `Note` values are preserved for existing rows.
 - Existing rows are matched by `Ability + Champion + Buff + Debuff`.
 - Existing `ID` values are preserved.
 - New rows receive the next numeric `ID`.
