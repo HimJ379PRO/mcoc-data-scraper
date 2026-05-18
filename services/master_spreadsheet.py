@@ -16,7 +16,7 @@ def upsert_ability_rows(
     scraped_rows: list[AbilityRow],
 ) -> dict[str, int]:
     if not sheet_id:
-        raise ValueError("GOOGLE_SHEET_ID is required when writing to Google Sheets.")
+        raise ValueError("MASTER_SHEET_ID is required when writing to Google Sheets.")
     if not Path(service_account_file).exists():
         raise FileNotFoundError(f"Service account file not found: {service_account_file}")
 
@@ -83,7 +83,7 @@ def check_worksheet_access(
     service_account_file: str,
 ) -> dict[str, int | str]:
     if not sheet_id:
-        raise ValueError("GOOGLE_SHEET_ID is required to check Google Sheets access.")
+        raise ValueError("MASTER_SHEET_ID is required to check Google Sheets access.")
     if not Path(service_account_file).exists():
         raise FileNotFoundError(f"Service account file not found: {service_account_file}")
 

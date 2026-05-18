@@ -48,7 +48,7 @@ def main() -> int:
 
     if args.check_sheet:
         result = check_worksheet_access(
-            sheet_id=settings.google_sheet_id,
+            sheet_id=settings.master_sheet_id,
             worksheet_name=settings.worksheet_name,
             service_account_file=settings.service_account_file,
         )
@@ -68,7 +68,7 @@ def main() -> int:
         return 0
 
     result = upsert_ability_rows(
-        sheet_id=settings.google_sheet_id,
+        sheet_id=settings.master_sheet_id,
         worksheet_name=settings.worksheet_name,
         service_account_file=settings.service_account_file,
         scraped_rows=rows,
