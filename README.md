@@ -1,6 +1,6 @@
 # MCOC Google Sheets Scraper
 
-Scrapes Marvel Contest of Champions Wiki ability pages with Playwright and upserts rows into the `Abilities` tab of a Google Sheet.
+Scrapes Marvel Contest of Champions data into Google Sheets.
 
 ## Sheet Columns
 
@@ -8,6 +8,12 @@ The `Abilities` worksheet must contain these headers in columns `A:K`:
 
 ```text
 ID | Ability | Description | Champion | Similar To | Offensive | Defensive | Buff | Debuff | Updated On | Note
+```
+
+The staging `MCOC.gg Data > Champions` worksheet must contain these headers in columns `A:N`:
+
+```text
+MCOC.gg ID | Champion | Class | Relic | Focus Attack | Focus Defense | Abilities | Immunities & Resistances | Counters Abilities | Counters Champions | Release Date | Tags | Updated On | Note
 ```
 
 ## Setup
@@ -40,12 +46,25 @@ python3 main.py --type buffs --limit 5
 python3 main.py --type debuffs --limit 5
 ```
 
+Preview staging Champions data from `mcoc.gg`:
+
+```bash
+python3 main.py --target staging --type champions --limit 5
+python3 main.py --target staging --type champions --champion "Absorbing Man"
+```
+
 ## Check Google Sheet Access
 
 After creating `.env` and sharing the Google Sheet with the service account email, verify that the script can open the sheet and find the required headers:
 
 ```bash
 python3 main.py --check-sheet
+```
+
+Check the staging Champions worksheet:
+
+```bash
+python3 main.py --target staging --check-sheet --type champions
 ```
 
 ## Write To Google Sheets
@@ -61,6 +80,13 @@ python3 main.py --type buffs --write-sheet
 python3 main.py --type debuffs --write-sheet
 ```
 
+Write staging Champions data:
+
+```bash
+python3 main.py --target staging --type champions --write-sheet
+python3 main.py --target staging --type champions --update --write-sheet
+```
+
 ## Mapping Rules
 
 - Generic Buffs rows use `Champion = Generic`.
@@ -74,3 +100,13 @@ python3 main.py --type debuffs --write-sheet
 - Existing rows are matched by `Ability + Champion + Buff + Debuff`.
 - Existing `ID` values are preserved.
 - New rows receive the next numeric `ID`.
+
+## Staging Champions Mapping
+
+- Staging Champions data is written only to `MCOC.gg Data > Champions`.
+- Normal staging writes insert missing Champions rows only.
+- Staging update mode refreshes existing Champions rows and inserts missing rows.
+- Existing staging Champions rows are matched by `MCOC.gg ID`.
+- If `MCOC.gg ID` is missing, exact `Champion` name matching is used.
+- Non-blank `Note` values are preserved.
+- Master data is not touched by staging commands.

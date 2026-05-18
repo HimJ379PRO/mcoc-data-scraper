@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 
-REQUIRED_HEADERS = [
+ABILITIES_HEADERS = [
     "ID",
     "Ability",
     "Description",
@@ -11,6 +11,23 @@ REQUIRED_HEADERS = [
     "Defensive",
     "Buff",
     "Debuff",
+    "Updated On",
+    "Note",
+]
+
+MCOC_GG_CHAMPIONS_HEADERS = [
+    "MCOC.gg ID",
+    "Champion",
+    "Class",
+    "Relic",
+    "Focus Attack",
+    "Focus Defense",
+    "Abilities",
+    "Immunities & Resistances",
+    "Counters Abilities",
+    "Counters Champions",
+    "Release Date",
+    "Tags",
     "Updated On",
     "Note",
 ]
@@ -45,6 +62,51 @@ class AbilityRow:
             self.defensive,
             str(self.buff),
             str(self.debuff),
+            self.updated_on,
+            row_note,
+        ]
+
+
+@dataclass(frozen=True)
+class McocGgChampionRow:
+    mcoc_gg_id: str
+    champion: str
+    champion_class: str
+    relic: str
+    focus_attack: str
+    focus_defense: str
+    abilities: str
+    immunities_resistances: str
+    counters_abilities: str
+    counters_champions: str
+    release_date: str
+    tags: str
+    updated_on: str
+    note: str = ""
+
+    @property
+    def id_key(self) -> str:
+        return normalize_key_part(self.mcoc_gg_id)
+
+    @property
+    def name_key(self) -> str:
+        return normalize_key_part(self.champion)
+
+    def to_sheet_values(self, note: str | None = None) -> list[str]:
+        row_note = self.note if note is None else note
+        return [
+            self.mcoc_gg_id,
+            self.champion,
+            self.champion_class,
+            self.relic,
+            self.focus_attack,
+            self.focus_defense,
+            self.abilities,
+            self.immunities_resistances,
+            self.counters_abilities,
+            self.counters_champions,
+            self.release_date,
+            self.tags,
             self.updated_on,
             row_note,
         ]

@@ -3,7 +3,7 @@ from pathlib import Path
 import gspread
 from google.oauth2.service_account import Credentials
 
-from models import AbilityRow, REQUIRED_HEADERS, make_key
+from models import ABILITIES_HEADERS, AbilityRow, make_key
 
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -28,7 +28,7 @@ def upsert_ability_rows(
     header = values[0]
     _validate_headers(header, worksheet_name)
 
-    existing_rows = [_pad_row(row, len(REQUIRED_HEADERS)) for row in values[1:]]
+    existing_rows = [_pad_row(row, len(ABILITIES_HEADERS)) for row in values[1:]]
     next_id = _next_numeric_id(existing_rows)
     existing_by_key = {
         make_key(row[1], row[3], row[7], row[8]): index
@@ -64,7 +64,7 @@ def upsert_ability_rows(
         next_id += 1
         inserted += 1
 
-    output = [REQUIRED_HEADERS] + existing_rows
+    output = [ABILITIES_HEADERS] + existing_rows
     end_row = len(output)
     worksheet.update(f"A1:K{end_row}", output, value_input_option="USER_ENTERED")
 
@@ -108,14 +108,14 @@ def _open_worksheet(sheet_id: str, worksheet_name: str, service_account_file: st
 
 
 def _validate_headers(header: list[str], worksheet_name: str) -> None:
-    missing = [name for name in REQUIRED_HEADERS if name not in header]
+    missing = [name for name in ABILITIES_HEADERS if name not in header]
     if missing:
         raise ValueError(
             f"Worksheet '{worksheet_name}' is missing required headers: {', '.join(missing)}"
         )
-    if header[: len(REQUIRED_HEADERS)] != REQUIRED_HEADERS:
+    if header[: len(ABILITIES_HEADERS)] != ABILITIES_HEADERS:
         raise ValueError(
-            "The first columns must exactly match: " + " | ".join(REQUIRED_HEADERS)
+            "The first columns must exactly match: " + " | ".join(ABILITIES_HEADERS)
         )
 
 
