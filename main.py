@@ -111,11 +111,14 @@ def _run_staging(args, settings) -> int:
         worksheet_name=settings.mcoc_gg_champions_worksheet_name,
         service_account_file=settings.service_account_file,
         scraped_rows=rows,
-        update_existing=args.update,
+        update_existing=True,
     )
     print("Staging Champions update complete:")
     for key, value in result.items():
+        if key in {"inserted_champions", "changed_champions"}:
+            continue
         print(f"  {key}: {value}")
+    _print_staging_update_summary(result)
     return 0
 
 
@@ -155,9 +158,7 @@ def _print_rows(rows, limit: int = 0) -> None:
 
 def _print_mcoc_gg_champions_summary(rows) -> None:
     with_ids = sum(1 for row in rows if row.mcoc_gg_id)
-    with_class = sum(1 for row in rows if row.champion_class)
-    print(f"  Rows with MCOC.gg ID: {with_ids}")
-    print(f"  Rows with Class: {with_class}")
+    print(f"  Rows with unique MCOC.gg ID: {with_ids}")
 
 
 def _print_mcoc_gg_champion_rows(rows, limit: int = 0) -> None:
@@ -167,6 +168,27 @@ def _print_mcoc_gg_champion_rows(rows, limit: int = 0) -> None:
         print(" | ".join(row.to_sheet_values()))
     if limit and len(rows) > limit:
         print(f"... {len(rows) - limit} more rows not shown")
+
+
+def _print_staging_update_summary(result) -> None:
+    inserted = result.get("inserted_champions", []) or []
+    changed = result.get("changed_champions", []) or []
+
+    if inserted:
+        print("New champions inserted:")
+        for champion in inserted:
+            print(f"  {champion}")
+
+    if changed:
+        print("Updated champions:")
+        for item in changed:
+            champion = item.get("champion", "")
+            changes = item.get("changes", [])
+            change_text = "; ".join(
+                f"{change['field']}: {change['old']} -> {change['new']}"
+                for change in changes
+            )
+            print(f"  {champion}: {change_text}")
 
 
 if __name__ == "__main__":

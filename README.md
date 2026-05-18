@@ -84,6 +84,13 @@ Write staging Champions data:
 
 ```bash
 python3 main.py --target staging --type champions --write-sheet
+```
+
+`--write-sheet` now inserts new champions and refreshes existing champion rows with updated data.
+
+Optional legacy form:
+
+```bash
 python3 main.py --target staging --type champions --update --write-sheet
 ```
 
@@ -104,8 +111,8 @@ python3 main.py --target staging --type champions --update --write-sheet
 ## Staging Champions Mapping
 
 - Staging Champions data is written only to `MCOC.gg Data > Champions`.
-- Normal staging writes insert missing Champions rows only.
-- Staging update mode refreshes existing Champions rows and inserts missing rows.
+- `--write-sheet` now inserts missing Champions rows and refreshes existing rows when source data has changed.
+- `--update --write-sheet` is optional legacy syntax for the same behavior.
 - Existing staging Champions rows are matched by `MCOC.gg ID`.
 - If `MCOC.gg ID` is missing, exact `Champion` name matching is used.
 - Non-blank `Note` values are preserved.
