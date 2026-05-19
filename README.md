@@ -117,3 +117,50 @@ python3 main.py --target staging --type champions --update --write-sheet
 - If `MCOC.gg ID` is missing, exact `Champion` name matching is used.
 - Non-blank `Note` values are preserved.
 - Master data is not touched by staging commands.
+
+## Sync Champions from Staging to Master
+
+Sync flagged champion rows from the staging `Champions` table to the master `Champs` table:
+
+```bash
+python3 main.py --sync-champs
+```
+
+This command performs a one-way sync for champions flagged for update in the master sheet:
+
+1. Reads the master `Champs` worksheet and identifies rows with `Update = 1` flag.
+2. Matches each flagged row with staging data by champion name.
+3. Copies updated field values from staging to master:
+   - Abilities
+   - Immunities & Resistances
+   - Counters Abilities
+   - Counters Champions
+   - Release Date
+   - Tags
+4. Resets the `Update` flag to `0` and updates the `Updated On` timestamp.
+5. Skips champions that cannot be matched in staging.
+
+### Example Behavior
+
+Master sheet before sync:
+```
+ID | Champion      | ... | Abilities | Update | Updated On
+1  | Iron Man      | ... | Repulsor  | 1      | 2026-05-10
+2  | Captain America| ... | Shield    | 0      | 2026-05-15
+```
+
+Staging sheet:
+```
+MCOC.gg ID | Champion      | ... | Abilities              | Updated On
+123        | Iron Man      | ... | Repulsor | Arc Reactor | 2026-05-19
+456        | Captain America| ... | Shield | Leadership    | 2026-05-19
+```
+
+After sync:
+```
+ID | Champion      | ... | Abilities              | Update | Updated On
+1  | Iron Man      | ... | Repulsor | Arc Reactor | 0      | 2026-05-19
+2  | Captain America| ... | Shield    | 0           | 2026-05-15
+```
+
+Only Iron Man was synced (Update=1), Captain America was skipped (Update=0). Iron Man's `Abilities` field was updated and the flag was reset. If a champion exists in master but not in staging, it remains unchanged and the `Update` flag stays as-is.

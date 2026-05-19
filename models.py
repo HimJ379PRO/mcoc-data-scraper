@@ -32,6 +32,43 @@ MCOC_GG_CHAMPIONS_HEADERS = [
     "Note",
 ]
 
+CHAMPS_HEADERS = [
+    "ID",
+    "Champion",
+    "Class",
+    "Abilities",
+    "Immunities & Resistances",
+    "Counters Abilities",
+    "Counters Champions",
+    "Release Date",
+    "Tags",
+    "Update",
+    "Updated On",
+    "Note",
+]
+
+CHAMPS_SYNC_FIELDS = [
+    "Abilities",
+    "Immunities & Resistances",
+    "Counters Abilities",
+    "Counters Champions",
+    "Release Date",
+    "Tags",
+]
+
+CHAMPS_REQUIRED_HEADERS = [
+    "ID",
+    "Champion",
+    "Abilities",
+    "Immunities & Resistances",
+    "Counters Abilities",
+    "Counters Champions",
+    "Release Date",
+    "Tags",
+    "Update",
+    "Updated On",
+]
+
 
 @dataclass(frozen=True)
 class AbilityRow:
@@ -109,6 +146,51 @@ class McocGgChampionRow:
             self.tags,
             self.updated_on,
             row_note,
+        ]
+
+
+@dataclass(frozen=True)
+class ChampsMasterRow:
+    id: str
+    champion: str
+    champion_class: str
+    relic: str
+    focus_attack: str
+    focus_defense: str
+    abilities: str
+    immunities_resistances: str
+    counters_abilities: str
+    counters_champions: str
+    release_date: str
+    tags: str
+    update: int
+    updated_on: str
+    note: str = ""
+
+    @property
+    def name_key(self) -> str:
+        return normalize_key_part(self.champion)
+
+    def to_sheet_values(self, update: int | None = None, updated_on: str | None = None, note: str | None = None) -> list[str]:
+        u = update if update is not None else self.update
+        uo = updated_on if updated_on is not None else self.updated_on
+        n = note if note is not None else self.note
+        return [
+            self.id,
+            self.champion,
+            self.champion_class,
+            self.relic,
+            self.focus_attack,
+            self.focus_defense,
+            self.abilities,
+            self.immunities_resistances,
+            self.counters_abilities,
+            self.counters_champions,
+            self.release_date,
+            self.tags,
+            str(u),
+            uo,
+            n,
         ]
 
 

@@ -10,6 +10,10 @@ from services.mcoc_gg_staging_spreadsheet import (
     check_mcoc_gg_champions_worksheet_access,
     upsert_mcoc_gg_champion_rows,
 )
+from services.champs_master_spreadsheet import (
+    check_champs_worksheet_access,
+    sync_flagged_champs,
+)
 
 
 def main() -> int:
@@ -32,9 +36,13 @@ def main() -> int:
     parser.add_argument("--champion", help="Limit Champions dry-run/write source data to an exact champion name.")
     parser.add_argument("--headful", action="store_true", help="Run Playwright with a visible browser.")
     parser.add_argument("--limit", type=int, default=0, help="Limit printed dry-run rows.")
+    parser.add_argument("--sync-champs", action="store_true", help="Sync flagged champion rows from staging to master Champs table.")
     args = parser.parse_args()
 
     settings = load_settings()
+
+    if args.sync_champs:
+        return _run_champs_sync(args, settings)
 
     if args.target == "staging":
         return _run_staging(args, settings)
@@ -189,6 +197,45 @@ def _print_staging_update_summary(result) -> None:
                 for change in changes
             )
             print(f"  {champion}: {change_text}")
+
+
+def _run_champs_sync(args, settings) -> int:
+    if args.check_sheet:
+        result = check_champs_worksheet_access(
+            sheet_id=settings.master_sheet_id,
+            worksheet_name=settings.champs_worksheet_name,
+            service_account_file=settings.service_account_file,
+        )
+        print("Champs sheet access check passed:")
+        for key, value in result.items():
+            print(f"  {key}: {value}")
+        return 0
+
+    result = sync_flagged_champs(
+        master_sheet_id=settings.master_sheet_id,
+        champs_worksheet_name=settings.champs_worksheet_name,
+        mcoc_gg_sheet_id=settings.mcoc_gg_sheet_id,
+        mcoc_gg_worksheet_name=settings.mcoc_gg_champions_worksheet_name,
+        service_account_file=settings.service_account_file,
+    )
+    print("Champs sync complete:")
+    synced = result.get("synced_champions", []) or []
+    failed = result.get("failed_to_match", []) or []
+
+    if synced:
+        print(f"Synced champions ({len(synced)}):")
+        for champion in synced:
+            print(f"  {champion}")
+
+    if failed:
+        print(f"Failed to match ({len(failed)}):")
+        for champion in failed:
+            print(f"  {champion}")
+
+    if not synced and not failed:
+        print("  No flagged rows found.")
+
+    return 0
 
 
 if __name__ == "__main__":
