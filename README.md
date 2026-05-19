@@ -1,29 +1,50 @@
-# MCOC Google Sheets Scraper
+# MCOC Data Scraper & Sync Tool
 
-Scrapes Marvel Contest of Champions data into Google Sheets.
+## TL;DR
 
-## Sheet Columns
+This tool automatically collects Marvel Contest of Champions game data from multiple sources and keeps your Google Sheets synchronized. It:
+- Scrapes ability data (buffs/debuffs) from community wikis
+- Fetches champion information from mcoc.gg database
+- Syncs updates from a staging table to your master database
+- Maintains data consistency with smart matching and deduplication
 
-The `Abilities` worksheet must contain these headers in columns `A:K`:
+Perfect for game analysts, content creators, and community managers who need up-to-date MCOC data.
 
-```text
-ID | Ability | Description | Champion | Similar To | Offensive | Defensive | Buff | Debuff | Updated On | Note
-```
+## Tech Stack
 
-The staging `MCOC.gg Data > Champions` worksheet must contain these headers in columns `A:N`:
+- **Language**: Python 3
+- **Web Scraping**: Playwright (for dynamic content)
+- **Google Sheets API**: gspread
+- **Authentication**: Google Service Account (OAuth2)
+- **Data Sources**: 
+  - Fandom wiki (abilities)
+  - mcoc.gg (champions)
 
-```text
-MCOC.gg ID | Champion | Class | Relic | Focus Attack | Focus Defense | Abilities | Immunities & Resistances | Counters Abilities | Counters Champions | Release Date | Tags | Updated On | Note
-```
+## Setup Instructions
 
-## Setup
+### Prerequisites
+- Python 3.8+
+- Google Cloud project with Sheets API enabled
+- A Google Sheet for storing data
 
-1. Create a Google Cloud service account and download its JSON key.
-2. Put the key at `credentials/service-account.json`.
-3. Share the Google Sheet with the service account email.
-4. Create a `.env` file from `.env.example`.
-5. Install dependencies:
+### Step 1: Google Cloud Setup
+1. Create a Google Cloud service account
+2. Download the service account JSON key
+3. Place the key at: `credentials/service-account.json`
+4. Share your Google Sheet with the service account email address
 
+### Step 2: Project Setup
+1. Clone or download this project
+2. Create a `.env` file from `.env.example`:
+   ```bash
+   cp .env.example .env
+   ```
+3. Edit `.env` and fill in:
+   - `MASTER_SHEET_ID`: Your master sheet's ID
+   - `MCOC_GG_SHEET_ID`: Your staging sheet's ID
+   - `GOOGLE_SERVICE_ACCOUNT_FILE`: Path to your credentials
+
+### Step 3: Install Dependencies
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
@@ -31,94 +52,77 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-## Dry Run
+### Step 4: Verify Setup
+```bash
+# Test master sheet access
+python3 main.py --check-sheet
 
-Dry run scrapes all supported ability pages and prints data without writing to Google Sheets:
+# Test staging sheet access
+python3 main.py --target staging --check-sheet --type champions
+```
 
+## Commands Reference
+
+### 1. Dry Run (Preview Data)
+Preview what would be scraped without writing to Google Sheets.
+
+**Scrape all abilities:**
 ```bash
 python3 main.py --limit 10
 ```
 
-Scrape a specific page only:
-
+**Scrape specific ability types:**
 ```bash
 python3 main.py --type buffs --limit 5
 python3 main.py --type debuffs --limit 5
 ```
 
-Preview staging Champions data from `mcoc.gg`:
-
+**Preview staging champions:**
 ```bash
 python3 main.py --target staging --type champions --limit 5
-python3 main.py --target staging --type champions --champion "Absorbing Man"
+
+# Search for specific champion
+python3 main.py --target staging --type champions --champion "Iron Man"
 ```
 
-## Check Google Sheet Access
+### 2. Check Sheet Access
+Verify the script can access your Google Sheets and find required headers.
 
-After creating `.env` and sharing the Google Sheet with the service account email, verify that the script can open the sheet and find the required headers:
-
+**Check master sheet:**
 ```bash
 python3 main.py --check-sheet
 ```
 
-Check the staging Champions worksheet:
-
+**Check staging sheet:**
 ```bash
 python3 main.py --target staging --check-sheet --type champions
 ```
 
-## Write To Google Sheets
+### 3. Write Data to Google Sheets
+Scrape data and update your Google Sheets.
 
+**Update all abilities:**
 ```bash
 python3 main.py --write-sheet
 ```
 
-Write a specific page only:
-
+**Update specific ability types:**
 ```bash
 python3 main.py --type buffs --write-sheet
 python3 main.py --type debuffs --write-sheet
 ```
 
-Write staging Champions data:
-
+**Update staging champions:**
 ```bash
 python3 main.py --target staging --type champions --write-sheet
 ```
 
-`--write-sheet` now inserts new champions and refreshes existing champion rows with updated data.
+Features:
+- Inserts new champions automatically
+- Updates existing champions when data changes
+- Preserves manual notes and custom fields
 
-Optional legacy form:
-
-```bash
-python3 main.py --target staging --type champions --update --write-sheet
-```
-
-## Mapping Rules
-
-- Generic Buffs rows use `Champion = Generic`.
-- Champion-specific Buffs rows use the table's `Unique to` champion value.
-- Debuffs rows use `Champion = Generic`.
-- Buffs rows use `Buff = 1` and `Debuff = 0`.
-- Debuffs rows use `Buff = 0` and `Debuff = 1`.
-- New Debuffs rows use `Note = Damaging` or `Note = Non-Damaging`.
-- Blank existing Debuffs `Note` values are backfilled from the scraper category.
-- `Similar To`, `Offensive`, `Defensive`, and non-blank `Note` values are preserved for existing rows.
-- Existing rows are matched by `Ability + Champion + Buff + Debuff`.
-- Existing `ID` values are preserved.
-- New rows receive the next numeric `ID`.
-
-## Staging Champions Mapping
-
-- Staging Champions data is written only to `MCOC.gg Data > Champions`.
-- `--write-sheet` now inserts missing Champions rows and refreshes existing rows when source data has changed.
-- `--update --write-sheet` is optional legacy syntax for the same behavior.
-- Existing staging Champions rows are matched by `MCOC.gg ID`.
-- If `MCOC.gg ID` is missing, exact `Champion` name matching is used.
-- Non-blank `Note` values are preserved.
-- Master data is not touched by staging commands.
-
-## Sync Champions from Staging to Master
+### 4. Sync Champions from Staging to Master
 
 Sync flagged champion rows from the staging `Champions` table to the master `Champs` table:
 
@@ -140,7 +144,7 @@ This command performs a one-way sync for champions flagged for update in the mas
 4. Resets the `Update` flag to `0` and updates the `Updated On` timestamp.
 5. Skips champions that cannot be matched in staging.
 
-### Example Behavior
+#### Example Behavior
 
 Master sheet before sync:
 ```
@@ -164,3 +168,102 @@ ID | Champion      | ... | Abilities              | Update | Updated On
 ```
 
 Only Iron Man was synced (Update=1), Captain America was skipped (Update=0). Iron Man's `Abilities` field was updated and the flag was reset. If a champion exists in master but not in staging, it remains unchanged and the `Update` flag stays as-is.
+
+## Common Workflows
+
+### Workflow 1: Initial Data Collection
+```bash
+# 1. Preview what will be scraped
+python3 main.py --type buffs --limit 10
+
+# 2. If it looks good, write to sheets
+python3 main.py --type buffs --write-sheet
+
+# 3. Repeat for debuffs
+python3 main.py --type debuffs --write-sheet
+```
+
+### Workflow 2: Update Champion Data
+```bash
+# 1. Scrape latest champion data to staging
+python3 main.py --target staging --type champions --write-sheet
+
+# 2. Review changes in staging sheet
+
+# 3. Flag champions that need syncing (set Update=1 in master)
+
+# 4. Sync to master
+python3 main.py --sync-champs
+```
+
+### Workflow 3: Refresh Specific Champion
+```bash
+# Preview changes for one champion
+python3 main.py --target staging --type champions --champion "Iron Man" --limit 1
+
+# If good, update it
+python3 main.py --target staging --type champions --champion "Iron Man" --write-sheet
+```
+
+## Data Mapping Rules
+
+### Abilities Mapping
+- Generic Buffs use `Champion = Generic`
+- Champion-specific Buffs use the champion's unique name
+- Debuffs always use `Champion = Generic`
+- Buffs are marked: `Buff = 1`, `Debuff = 0`
+- Debuffs are marked: `Buff = 0`, `Debuff = 1`
+- New Debuffs are categorized as `Damaging` or `Non-Damaging`
+- Blank Debuff notes are auto-filled from scraper category
+- Custom fields (`Similar To`, `Offensive`, `Defensive`, `Note`) are preserved
+- Rows are matched by: `Ability + Champion + Buff + Debuff`
+- Existing IDs are preserved, new rows get auto-incremented IDs
+
+### Champions Mapping
+- Staging data goes to `MCOC.gg Data > Champions` worksheet
+- New champions are inserted automatically
+- Existing champions are matched by `MCOC.gg ID` or champion name
+- Custom notes are preserved
+- Master sheet is only updated via the sync command
+
+## Sheet Requirements
+
+### Master Sheet - Abilities Worksheet
+Required headers (in any order):
+```
+ID | Ability | Description | Champion | Similar To | Offensive | Defensive | Buff | Debuff | Updated On | Note
+```
+
+### Master Sheet - Champs Worksheet
+Required headers (in any order):
+```
+ID | Champion | Abilities | Immunities & Resistances | Counters Abilities | Counters Champions | Release Date | Tags | Update | Updated On
+```
+
+Optional headers: Class, Relic, Focus Attack, Focus Defense, Note
+
+### Staging Sheet - Champions Worksheet
+Required headers:
+```
+MCOC.gg ID | Champion | Class | Relic | Focus Attack | Focus Defense | Abilities | Immunities & Resistances | Counters Abilities | Counters Champions | Release Date | Tags | Updated On | Note
+```
+
+## Troubleshooting
+
+**"Sheet not found" error:**
+- Verify sheet IDs in `.env` are correct
+- Ensure sheet is shared with service account email
+
+**"Missing headers" error:**
+- Create the worksheet tab if it doesn't exist
+- Add all required headers to the first row
+
+**Script hangs during scraping:**
+- This is normal for first run - it's downloading browser engine
+- Subsequent runs will be faster
+- Use `--limit` to test with fewer rows
+
+**No champions synced:**
+- Check that master sheet has champions with `Update = 1`
+- Verify champion names match between master and staging exactly
+- Run with `--check-sheet` to confirm headers
